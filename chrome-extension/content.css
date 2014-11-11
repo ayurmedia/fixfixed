@@ -1,0 +1,26 @@
+.fixfixed, 
+.fixfixed::before,
+.fixfixed::after {
+	transform: translateZ(0);
+}
+.fixfixedbackground, 
+.fixfixedbackground::before,
+.fixfixedbackground::after {
+	background-attachment: scroll !important;
+}
+/* fix w3c */
+body {
+	background-attachment: inherit !important;
+}
+.fixfixedscrollcover {
+	top:0;
+	left:0;
+	right:0;
+	pointer-events:auto!important;
+	z-index:10000;
+	width:100%;
+	display:block;
+	position:fixed;
+	height:100%;
+	transform:translateZ(0);
+}

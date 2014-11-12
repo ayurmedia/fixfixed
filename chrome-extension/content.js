@@ -4,15 +4,46 @@ var FixFixed = function() {
 	var oldScrollY, 
 		timer,
 		filterTag, 
-		disableRefresh;
+		disableRefresh,
+		cover,
+	    coverTimer, 
+	    coverIsVisible;
+	
 	
 	function init(window) {
 	
 	  this.oldScrollY = 0; 
 	  this.disableRefresh = 0;
 	  this.filterTag ="*";
-	  
+	  this.cover = document.createElement('fixfixedscrollcover'); /* prevent problems of "body>div" styles */
+	  this.cover.setAttribute('class','fixfixedscrollcover');
+	  this.coverIsVisible = false; 
 	  this.addClasses(window);
+	
+	  document.onscroll = function(){ FixFixed.tryScrollCover(window) }
+	}
+	
+	function tryScrollCover(window) {
+	   //console.log( 'try scrollx');
+	   //console.log(this)
+	   
+	  if ( typeof this.coverTimer !='undefined' ) {
+	  	clearTimeout(this.coverTimer);
+	  }
+	  
+	  if ( !this.coverIsVisible ) {
+		document.body.appendChild(this.cover); 
+		this.coverIsVisible = true; 
+		//FixFixed.refresh(window)
+	  }
+	  
+	  this.coverTimer = setTimeout(function(){
+		// we are now in global scope !
+	    document.body.removeChild(FixFixed.cover);
+	    FixFixed.coverIsVisible = false; 
+		FixFixed.refresh(window)
+		
+	  },166);
 	}
 	
 	function tryAddClass(item,className) {
@@ -119,43 +150,8 @@ var FixFixed = function() {
 		
 	}
 	
-	return {init: init, refresh: refresh, addClasses: addClasses, tryAddClass: tryAddClass }
+	return {init: init, refresh: refresh, addClasses: addClasses, tryAddClass: tryAddClass, tryScrollCover: tryScrollCover }
 }()
 
-
-
-console.log('fixfixed loaded');
 FixFixed.init(window);
-
-if ( 1 ) {
-	var fixfixed_body = document.body,
-	    fixfixed_cover = document.createElement('fixfixedscrollcover'), /* prevent problems of "body>div" styles */
-	    fixfixed_cover_timer, 
-	    fixfixed_cover_visible;
-	  
-	fixfixed_cover.setAttribute('class','fixfixedscrollcover');
-	fixfixed_cover_visible = false; 
-	
-	var fixfixed_try_scroll_cover = function() {
-	   //console.log( 'try scrollx');
-	   
-	  if ( typeof fixfixed_cover_timer !='undefined' ) {
-	  	clearTimeout(fixfixed_cover_timer);
-	  }
-	  
-	  if ( !fixfixed_cover_visible ) {
-		fixfixed_body.appendChild(fixfixed_cover);
-		fixfixed_cover_visible = true; 
-		//FixFixed.refresh(window)
-	  }
-	  
-	  fixfixed_cover_timer = setTimeout(function(){
-	    fixfixed_body.removeChild(fixfixed_cover);
-	    fixfixed_cover_visible = false; 
-		FixFixed.refresh(window)
-		
-	  },166);
-	}
-		
-	document.onscroll = fixfixed_try_scroll_cover;
-};
+console.log('fixfixed loaded');

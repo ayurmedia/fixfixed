@@ -163,21 +163,13 @@ var fixfixed_background_class = function( chrome ) {
 					code: "setTimeout( function(){ ext_fixfixed.init(window) } , 0); "
 				});
 				
-				self.enable_feature( tabId, 'highlight',   1 ); 
+				self.enable_feature( tabId, 'highlight',   0 ); 
 				self.enable_feature( tabId, 'scrollcover', 1 ); 
-				self.enable_feature( tabId, 'animation',   1 ); 
+				self.enable_feature( tabId, 'animation',   0 ); 
 				self.enable_feature( tabId, 'background',   1 ); 
-				self.enable_feature( tabId, 'transition',   1 ); 
+				self.enable_feature( tabId, 'transition',   0 ); 
 				
-				if ( self.get_config( 'fixfixed_scrollcover' , 1) == 1 ) {
-					chrome.tabs.executeScript(tabId, {
-						code: "document.body.classList.add( '"+ uuid_class +"-scrollcover' ); "
-					});
-				} else {
-					chrome.tabs.executeScript(tabId, {
-						code: "document.body.classList.remove( '"+ uuid_class +"-scrollcover' ); "
-					});
-				}
+				
 				chrome.tabs.executeScript(tabId, {
 					code: "document.body.classList.add( '"+ uuid_class +"' ); "
 				});

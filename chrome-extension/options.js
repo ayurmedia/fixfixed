@@ -11,7 +11,7 @@ var options_config = {
 		,
 		{
 			name: 'fixfixed_animation', 
-			default: 1
+			default: 0
 		}
 		,
 		{
@@ -21,7 +21,7 @@ var options_config = {
 		,
 		{
 			name: 'fixfixed_transition', 
-			default: 1
+			default: 0
 		}
 		,
 		{

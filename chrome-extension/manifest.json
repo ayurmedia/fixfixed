@@ -2,17 +2,23 @@
  "name": "Smooth Scrolling with 60fps",
   "short_name": "fixfixed",
   "description": "Fix position:fixed by adding transform:translateZ(0) to element. For smooth scrolling with 60fps.",
-  "version": "0.9",
+  "version": "1.0",
   "content_scripts": [ {
+	  "run_at": "document_start", 
 	  "matches": ["http://*/*","https://*/*"], 
 	  "css": [ "content.css" ], 
 	  "js": [ "content.js" ], 
+	  "all_frames": false 
+  },{
+	"run_at": "document_end", 
+	"matches": ["http://*/*","https://*/*"], 
+	  "js": [ "content.end.js" ], 
 	 "all_frames": false 
   } ],
   "options_page": "options.html",
   "background": { "scripts": ["background.js"] },
   "permissions": [
-    "tabs", "http://*/*", "https://*/*"
+    "storage","tabs", "http://*/*", "https://*/*"
   ],
   "browser_action": {
       "name": "Click to toggle Fix-Fixed"

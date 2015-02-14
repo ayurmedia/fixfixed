@@ -1,35 +1,32 @@
-.chrome-fixfixed .fixfixed, 
-.chrome-fixfixed .fixfixed::before,
-.chrome-fixfixed .fixfixed::after {
+.chrome-fixfixed-on_off .fixfixed, 
+.chrome-fixfixed-on_off .fixfixed::before,
+.chrome-fixfixed-on_off .fixfixed::after {
 	-webkit-transform: translateZ(0);
 	transform: translateZ(0);
 }
-.chrome-fixfixed.chrome-fixfixed-highlight .fixfixed {
+.chrome-fixfixed-on_off.chrome-fixfixed-highlight .fixfixed {
 	border:3px dotted orange !important;
-	xbackground: yellow !important; 
 }
-.chrome-fixfixed.chrome-fixfixed-background .fixfixedbackground, 
-.chrome-fixfixed.chrome-fixfixed-background .fixfixedbackground::before,
-.chrome-fixfixed.chrome-fixfixed-background .fixfixedbackground::after {
+.chrome-fixfixed-on_off.chrome-fixfixed-background .fixfixedbackground, 
+.chrome-fixfixed-on_off.chrome-fixfixed-background .fixfixedbackground::before,
+.chrome-fixfixed-on_off.chrome-fixfixed-background .fixfixedbackground::after {
 	background-attachment: scroll !important;
 }
 /* fix w3c.org website */
-body.chrome-fixfixed.chrome-fixfixed-background {
+body.chrome-fixfixed-on_off.chrome-fixfixed-background {
 	background-attachment: inherit !important;
 }
 
 
-.chrome-fixfixed.chrome-fixfixed-animation * {
-	-webkit-animation: none !important;
-	animation:none !important;
+.chrome-fixfixed-on_off.chrome-fixfixed-animation * {
+	-webkit-animation-duration: 0 !important;
 }
 
-.chrome-fixfixed.chrome-fixfixed-transition * {
-	-webkit-transition: none !important;
-	transition:none !important;
+.chrome-fixfixed-on_off.chrome-fixfixed-transition * {
+	-webkit-transition-duration: 0 !important;
 }
 
-.chrome-fixfixed.chrome-fixfixed-scrollcover .fixfixedscrollcover {
+.chrome-fixfixed-on_off.chrome-fixfixed-scrollcover .fixfixedscrollcover {
 	top:0;
 	left:0;
 	right:0;

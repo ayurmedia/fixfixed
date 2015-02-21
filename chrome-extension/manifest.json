@@ -2,7 +2,7 @@
  "name": "Smooth Scrolling with 60fps",
   "short_name": "fixfixed",
   "description": "Fix position:fixed by adding transform:translateZ(0) to element. For smooth scrolling with 60fps.",
-  "version": "1.0",
+  "version": "1.1",
   "content_scripts": [ {
 	  "run_at": "document_start", 
 	  "matches": ["http://*/*","https://*/*"], 

@@ -9,7 +9,8 @@ var fixfixed_content_class = function( chrome ) {
 		'transition': 	0, 
 		'highlight': 	0, 
 		'background':	1,
-		'scrollcover': 	1
+		'scrollcover': 	1, 
+		'hide_scrollbar': 0
 	}
 	
 	self.init = function(window) {
@@ -20,6 +21,8 @@ var fixfixed_content_class = function( chrome ) {
 		self.disableRefresh = 0;
 		self.filterTag = "*";
 		self.firstRun = 1;
+		self.extraCSSRestore = ''; 
+		
 		self.cover = document.createElement('fixfixedscrollcover'); /* prevent problems of "body>div" styles */
 		self.cover.setAttribute('class', 'fixfixedscrollcover');
 		self.coverIsVisible = false;
@@ -50,6 +53,9 @@ var fixfixed_content_class = function( chrome ) {
 				self.tryScrollCover(window)
 			}
 		
+			
+			
+			
 		} else {
 			chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: 'off' });
 		
@@ -150,34 +156,8 @@ var fixfixed_content_class = function( chrome ) {
 	}
 
 
-	self.tryAddClass = function(item, className) {
-		//console.log( "adding fix to item") 
-		//console.log( item.getAttribute("data-"+className) == null )
-		//console.log( item )
-		
-		if (item.classList.contains('fixfixedscrollcover' ) ) {
-			// skip special scrollcover
-			return ; 
-		}
-		
-		if (item.getAttribute("data-" + className) == null) {
-			item.classList.add(className);
-			item.setAttribute("data-" + className, 1)
-		}
-		
-		
-	}
 	
-	self.findFixed = function(item,type){
-		self.styles = document.defaultView.getComputedStyle(item, type)
-		if (typeof self.styles.position != "undefined" && self.styles.position == "fixed" && self.styles.transform == "none") {
-			//console.log( self.styles.transform );
-			self.tryAddClass(item, "fixfixed");
-		}
-		if (typeof self.styles.backgroundAttachment != "undefined" && self.styles.backgroundAttachment == "fixed") {
-			self.tryAddClass(item, "fixfixedbackground")
-		}
-	}
+	
 
 	self.load_stylesheet = function( href, callback ) {
 		
@@ -214,124 +194,57 @@ var fixfixed_content_class = function( chrome ) {
 				document.body.appendChild( extraCSSStyle );
 				
 				// we are async, so we update each time, its fast.
-				self.counter++; 
 				chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: self.counter });
 		}
 	}
 	
 	// one line 
-	self.createExtraCSS = function ( rule_text ) {
+	self.createExtraCSS = function ( rule , mediaText ) {
 		var extraCSS = ''; 
+		if (typeof mediaText == "undefined" ) { 
+			mediaText = "" ;
+		}
+		//console.log( "rule: ", rule ); 
+		var mediaBegin = ( mediaText != '' ) ? " @media "+ mediaText + "{ " : " "; 
+		var mediaEnd   = ( mediaText != '' ) ? " } " : " "; 
 		
-		if( rule_text.search(/transform|scrolling/) > -1 ) {
-			//	console.log('nope: has transform ', rule_text );
+		if ( typeof rule.style == 'undefined' ) {
+			//console.log( "undefined", rule ); 
+			return ""; 
+		}
+		
+		if( (typeof rule.style.transform != "undefined" && rule.style.transform != '' ) || 
+			(typeof rule.style.webkitTransform != "undefined" && rule.style.webkitTransform != '')  ) {
+				//console.log('nope: has transform ', rule );
+			
+				// collect the transforms and append them at the end, to correct some false-positives	
+				self.extraCSSRestore += mediaBegin + rule.selectorText + " { /* restore */ transform: "+ rule.style.transform +" } " + mediaEnd ;
+			
 		} else {
-			//console.log( "yes:" , rule_text );
 			
-			// check if rule has position: we get them all from direct css
-			var has_fixed = rule_text.search( /[a-zA-Z0-9\"\-\[\+\>[\]\=\,\.\_\#\: ]+\{[^}]*position\:\s*fixed[^}]*\}/g )
+			//console.log( "rule:" , rule.cssText );
+			//console.log( "sel:"  , rule.selectorText );
 			
-			var selectors = rule_text.match(/[a-zA-Z0-9\"\-\+\>\[\]\=\,\.\_\#\: ]+\{/g);
+			
 					
-			if ( has_fixed > -1 ) {
-				
-				// usualy only 1 match
-				for ( sel_key in selectors ) {
-					
-					// hack for html5test.com
-					if( "body > div#index" == selectors[sel_key] ) { continue; }
+			if ( rule.style.position == 'fixed' && /* fix html4test.com */ !( rule.style.top == '0px' && rule.style.left == '0px' && rule.style.display == 'block' ) ) {
+					//console.log( rule.style ); 
 					
 					var css_highlight = ( self.options['highlight'] == 1) ? " border:3px dotted orange ": ""; 
-					extraCSS +=  selectors[sel_key] + " transform: translateZ(0); "+ css_highlight + " }";
-					
-					// "."+ self.uuid_class +"-on_off "+
-					//console.log( "has fixed: ", selectors[sel_key] );
-				}
+					extraCSS +=  mediaBegin + rule.selectorText + " { transform: translateZ(0); "+ css_highlight + " }" + mediaEnd;
 				
-				
-			} else {
-				for ( sel_key in selectors ) {
-					//console.log(" no fixed", selectors[sel_key] );
-				}
+					self.counter++; 
 			}
+			
+			
+			
+			
+						 
 		}
 		return extraCSS;
 	}
 	
-			
-	self.addClasses = function(window) {
-		
-		chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: self.counter });
-	    
-	    
-		// read stylesheets
-		// scan for position:fixed
-		
-		var stylesheets = document.styleSheets; 
-		var stylesheets_count = stylesheets.length; 
-		
-		console.log( 'stylesheets');
-		
-		self.extraCSSs = ''; 
-		
-		for ( key_s in stylesheets ) {
-			var stylesheet = document.styleSheets[key_s]; 
-			var rules = stylesheet.cssRules ;
-		
-			console.log( "--------");
-			//console.log( "stylesheet:" , stylesheet );
-			//console.log( "rules:" 	   , stylesheet.cssRules );
-			console.log( "href:" 	   , stylesheet.href );
-		
-			if ( typeof stylesheet.checked == 'undefined' ) {
-			
-			if (  rules == null &&
-				 typeof stylesheet.href  != 'undefined'
-				  ){
-				
-				console.log( "fetch" );
-				
-				stylesheet.checked = 1 ; // prevent fetching again.
-				
-				// fetch rules via xhr
-				self.load_stylesheet( stylesheet.href , function( css ){
-					extraCSS1 = ''; 
-					//stylesheet.cssText = css; 
-					//console.log( css )
-				
-					// parse css-string for position: fixed
-					// grab the selector also
-					// scan also for stopwords like, transform so we dont break css
-					// append fixed css to document, simply by append innerhtml
-					
-					//console.log( css );
-					
-					
-					//var css2 = css.replace(/\r\n/g,'') ;
-					
-					
-					//console.log( css2 );
-					
-					var matches = css.match( /[a-zA-Z0-9\"\+\>\-\[\]\=\,\.\_\#\: ]+\{[^}]*position\:\s*fixed[^}]*\}/g )
-				
-					var rule_text = '';
-					for ( key in matches ) {
-						var rule_text = matches[key];
-						// collect rules
-						extraCSS1 += self.createExtraCSS( rule_text );
-					}
-					
-					//console.log( "found direkt: ( " , extraCSS1, " )");
-					
-					// add <style>. try only one insert
-					self.appendCSS( extraCSS1 );
-				});
-				
-				//self.debug_rules( rules );
-			} else {
-				// load direct
-				
-				stylesheet.checked = 1 ; // prevent fetching again.
+	self.checkRules = function( rules , callback ) {
 				extraCSS = ''; 
 				if ( rules != null ) {
 					//console.log( 'new: ', rules );
@@ -347,25 +260,23 @@ var fixfixed_content_class = function( chrome ) {
 							//console.log( rule.cssRules );
 							
 							if ( typeof rule.cssRules != "undefined") {
-							
+								
 								for( key2 in rule.cssRules ) {
 									var rule2 = rule.cssRules[key2];
 									
 									//console.log("rule2: ",  rule2 );
 									
 									if ( typeof rule2.cssText == "undefined" ) { continue; } 
-									var rule_text = rule2.cssText;
 									
-									//console.log( rule_text );
-									
-									extraCSS += self.createExtraCSS( rule_text );
+									extraCSS +=  self.createExtraCSS( rule2 ,  rule.media.mediaText );
 									
 								}	
 							}
 						} else {
 							var rule_text = rule.cssText;
+									
 							if ( typeof rule_text != "undefined" ) {
-								extraCSS += self.createExtraCSS( rule_text );
+								extraCSS += self.createExtraCSS( rule );
 							} else {
 								// ignore exotic rules
 								//console.log("bad: ", rule );
@@ -380,88 +291,104 @@ var fixfixed_content_class = function( chrome ) {
 					//self.debug_rules( rules );
 					console.log( "has rules first run");
 				} else {
-					console.log( "no rules ", stylesheet );
+					console.log( "no rules "  );
 				}
-			}
 			
+			if ( typeof callback == "function") {
+				callback();
+			}
+
+	}
+			
+	self.rulesForCssText = function (styleContent) {
+	    var doc = document.implementation.createHTMLDocument(""),
+	        styleElement = document.createElement("style");
+	
+	   styleElement.textContent = styleContent;
+	    // the style will only be parsed once it is added to a document
+	    doc.body.appendChild(styleElement);
+	
+	    return styleElement.sheet.cssRules;
+	};		
+
+	self.addClasses = function(window) {
+		
+		chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: self.counter });
+	    
+	    
+		// read stylesheets
+		// scan for position:fixed
+		
+		var stylesheets = document.styleSheets; 
+		var stylesheets_count = stylesheets.length; 
+		
+		console.log( 'stylesheets');
+		
+		self.extraCSSs = ''; 
+		self.async_loop = 1; 
+		self.async_running = 0; 
+		
+		for ( key_s in stylesheets ) {
+			var stylesheet = document.styleSheets[key_s]; 
+			var rules = stylesheet.cssRules ;
+		
+			console.log( "--------");
+			//console.log( "stylesheet:" , stylesheet );
+			//console.log( "rules:" 	   , stylesheet.cssRules );
+			console.log( "href:" 	   , stylesheet.href );
+		
+			if ( typeof stylesheet.checked == 'undefined' ) {
+			
+				if (  rules == null &&
+					 typeof stylesheet.href  != 'undefined'
+					  ){
+					
+					console.log( "fetch" );
+					
+					stylesheet.checked = 1 ; // prevent fetching again.
+					
+					// fetch rules via xhr
+					self.async_running++; 
+					
+					self.load_stylesheet( stylesheet.href , function( css ){
+						self.async_running--;
+						var rules = self.rulesForCssText(css);
+					
+						self.checkRules( rules  , self.async_finished  ); 
+						
+					});
+					
+					//self.debug_rules( rules );
+				} else {
+					// load direct
+					stylesheet.checked = 1 ; // prevent fetching again.
+			
+					self.checkRules( rules );			
+				}
 			} else {
 				console.log( "already checked");
 			}
 			
 			
 		}
+		self.async_loop = 0; 
+		self.async_finished(); 
 		
-		//return; 
-		
-		console.log('parsing');
-		
-		// append user-styles to these selectors
-		
-		// make a quick scan over elements with (<* style='*'>) and try to find bad divs there
-		
-	
-	
-		//var number = 42;	
-		//chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: number });
-	
 		return; 
 		
-	
-		
-		//console.log( "try refresh" );
-		var items = document.body.querySelectorAll('*[style]');
-		
-		if (self.filterTag == "*" && items.length > 32500) {
-			// to heavy on dom, only check div
-			self.filterTag = "div";
-			console.log('too many dom elements with * , next round only div');
-			chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: ':-|' });
-	
-			//self.addClasses(window)
-		}
-		var nr = 0
-		while (item = items[nr++]) {
-			// lazy optimization, if we find fixfixed* on item skip it , probably no more hits here
-			if ((typeof item.dataset.fixfixed == "undefined") && (typeof item.dataset.fixfixedbackground == "undefined")) {
-				
-				// normal
-				self.findFixed(item,null)
-				
-				// only check before/after on first scan (finding backgrounds)
-				if ( self.firstRun == 1) {
-					// before
-					self.findFixed(item,":before")
-					
-					// after
-					self.findFixed(item,":after")
-					
-					self.firstRun = 0;
-				}
-			}
-		} // while
-		
-		
-		// undo fixfixed if not used any more (overflow bugs with ebay.de)
-		var itemsFixed = document.body.querySelectorAll(".fixfixed");
-		var nr = 0
-		while (item = itemsFixed[nr++]) {
-			// check if we need to remove it
-			var styles = document.defaultView.getComputedStyle(item, null)
-			if (typeof styles.position != "undefined" && styles.position != "fixed") {
-				// remove class 
-				item.dataset.fixfixed = 0;
-				item.classList.remove('fixfixed');
-			}
-		}
-		
-				
-			var fixed_elements = document.body.querySelectorAll( ".fixfixed",".fixfixedbackground" );
-			var counter = fixed_elements.length;
-		
-			//chrome.runtime.sendMessage({ type: 'badge', text: "set counter", number: counter });
-	
+			
 	}
 	
+	self.async_finished = function() {
+		if ( self.async_running == 0 && self.async_loop == 0) {
+			// last async finished; 
+			// try to apply transform css again, so they will 
+			// cancel out our translateZ(0) which might break the rendering
+			if ( self.extraCSSRestore != '' ) {
+				self.appendCSS( self.extraCSSRestore );
+			}
+		}
+	}
 	// scan the dom after a while to detect changes
 	// only scan if number of document.stylesheets has changed
 	// -- full reparse of styles

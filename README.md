@@ -7,10 +7,7 @@ Find the extension in google store here:
 https://chrome.google.com/webstore/detail/fix-fixed/dgemgghfpehbgjofnpdeidajmobbkhfg
 
 Also i have fixed chromium.app itself to optimized position:fixed directly: 
-https://dl.dropboxusercontent.com/u/96620836/Chromium.app.zip
-(Compiled for Mac latest version from git Feb 2015)
-I try to commit the changes to official chromium in several weeks when i understand the deploy process. 
-
+(but its outdated, so i removed the links)
 
 It works as follows: 
 
